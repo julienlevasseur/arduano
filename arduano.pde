@@ -244,7 +244,7 @@ void displayError() {
 
 void display() {
   
-  // Usage of CursorTo : CursorTo(Column,Line);
+  // For info : Usage of CursorTo : CursorTo(Column,Line);
 
   //calculateChronoForDisplay(currentChrono);
   calculateChronoInMilliseconds(currentChrono);
