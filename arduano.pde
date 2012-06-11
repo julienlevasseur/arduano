@@ -39,7 +39,7 @@ long currentChronoDisplayInMilliseconds;
 long currentChronoDisplayInMinutes;
 int buttonState;
 int previousbuttonState;
-int standByButton;
+int standByButton = HIGH;
 int previousStandByButtonState;
 //String errormsg;
 long bestLap;
@@ -90,9 +90,7 @@ void setup(){
 // MAIN //
 
 void loop() {
-  
-  // Clear screen each ten seconds
-  timer.run();
+
   // Throw exceptions and display here if there :
   displayError();
   // Manage standByMode and define currentChrono  :
@@ -108,9 +106,9 @@ void loop() {
      buttonPushed();
      previousbuttonState = buttonState;
  }
- /*if (standByButton == LOW && millis() - time > debounce) {
-   standByMode = true;
- }*/
+ //if (standByButton == LOW && millis() - time > debounce) {
+ //  standByMode = true;
+ //}
  
  // Call display function :
  display();
@@ -122,6 +120,8 @@ void buttonPushed() {
   // Clear the screen :
   GLCD.ClearScreen();
   GLCD.ClearScreen();
+  // Clear screen each ten seconds
+  timer.run();
   // If Arduano is in standby mode, toggle it to running mode :
   if (standByMode = true) {
     standByMode = false;	
@@ -294,7 +294,10 @@ void display() {
   
   // Display Difference between two last laps :
   GLCD.CursorTo(4,3);
-  GLCD.print(lastLapDiffTimeSymbol);
+  // If lap is lower than 1 don't display the lastLapDiffTimeSymbol :
+  if (lap > 1) {
+    GLCD.print(lastLapDiffTimeSymbol);
+  }
   GLCD.CursorTo(5,3);
   GLCD.print(lastLapDiffTimeInMinutes);
   GLCD.Puts("'");
