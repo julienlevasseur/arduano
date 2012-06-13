@@ -330,9 +330,27 @@ void writeToSD(string stringLog) {
     errormsg = 'SDERR';
   }
   // Close the file :
-  file.close();
+  //file.close();
 }
 */
+// NEED TO BE TESTED (NO MORE SD SHIELD TO TEST - USE AS YOUR OWN RISKS !!!!
+// This function is used to write the logs of chrono in SD card :
+void writeToSD(string stringLog) {
+  
+  // Open file for writing :
+  int i = 1;
+  string filename = "session" + i + ".log";
+  if (!SD.exists(filename)) {
+    file = SD.open(filename, FILE_WRITE);
+      if (file) {
+        file.println(stringLog); 
+      } else {
+        errormsg = 'SDERR';
+      }
+  } else {
+  i++;
+  }
+}
 
 // This function exist for cleaning the screen every 10s to prevent display bugs :
 void doEachTenSeconds() {
