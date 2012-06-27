@@ -16,11 +16,12 @@
 #include <glcd_Config.h>
 #include <Wire.h>
 #include <Time.h>
-#include <ds1307.h>
 #include "fonts/SystemFont5x7.h"
 #include "fonts/Arial_bold_14.h"
 #include <SD.h>
 #include <SimpleTimer.h>
+#include <EEPROM.h>
+#include "EEPROMAnything.h"
 
 // VARIABLES //
 
@@ -55,6 +56,7 @@ long time;
 long debounce = 200;
 String logLine;
 String logTest;
+int firstEEPROMFreeAddress;
 
 // SETUP //
 
@@ -83,8 +85,10 @@ void setup(){
  
   timer.setInterval(10000, doEachTenSeconds);
  
-  // Init DS1307 RTC module :
+  // Init the serial link for getting stored crhonos via USB :
   Serial.begin(9600);
+  String eepromContent = EEPROM_readAnything(0, logLine);
+  Serial.print();
 }
 
 // MAIN //
@@ -106,12 +110,11 @@ void loop() {
      buttonPushed();
      previousbuttonState = buttonState;
  }
- //if (standByButton == LOW && millis() - time > debounce) {
- //  standByMode = true;
- //}
  
  // Call display function :
  display();
+ // Call clearScreenForTenSeconds for clean screen to prevent display bugs :
+ clearScreenForTenSeconds();
  
 }
 
@@ -136,6 +139,7 @@ void buttonPushed() {
             String(lastLapDiffTimeInSeconds) + "'" + 
             String(lastLapDiffTimeInMilliSeconds) + ";\n";
   //writeToSD(logLine);
+  writeToEEPROM(logLine);
   Serial.print(logLine);
 
   last2Chrono = last1Chrono;
@@ -319,7 +323,7 @@ void display() {
 
 /*
 // This function is used to write the logs of chrono in SD card :
-void writeToSD(string stringLog) {
+void writeToSD(String stringLog) {
   
   // Open file for writing :
   string filename = "race.log";
@@ -335,7 +339,7 @@ void writeToSD(string stringLog) {
 */
 // NEED TO BE TESTED (NO MORE SD SHIELD TO TEST - USE AS YOUR OWN RISKS !!!!
 // This function is used to write the logs of chrono in SD card :
-void writeToSD(string stringLog) {
+/*void writeToSD(String stringLog) {
   
   // Open file for writing :
   int i = 1;
@@ -350,7 +354,12 @@ void writeToSD(string stringLog) {
   } else {
   i++;
   }
+}*/
+
+void writeToEEPROM(String stringLog) {
+  EEPROM_writeAnything(0, stringLog);
 }
+
 
 // This function exist for cleaning the screen every 10s to prevent display bugs :
 void doEachTenSeconds() {
