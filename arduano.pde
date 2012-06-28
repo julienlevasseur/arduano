@@ -6,7 +6,7 @@
 //
 // Begin on 22 March 2012 from initial
 // code by 15 February 2011
-// Last modification : 09 June 2012
+// Last modification : 27 June 2012
 // ===================================
 
 
@@ -25,6 +25,7 @@
 
 // VARIABLES //
 
+int sessionNumber;
 long pushedTime = 0;
 long currentChrono;
 int lap;
@@ -42,7 +43,7 @@ int buttonState;
 int previousbuttonState;
 int standByButton = HIGH;
 int previousStandByButtonState;
-//String errormsg;
+String errormsg;
 long bestLap;
 long bestLapDisplay;
 long bestLapInMilliSeconds;
@@ -57,11 +58,23 @@ long debounce = 200;
 String logLine;
 String logTest;
 int firstEEPROMFreeAddress;
+int nbBytesWritten;
+int usedEEPROMAdress;
 
 // SETUP //
 
 void setup(){
 
+  // usedEEPROMAdress var is set to declare the address of EEPROM where is stocked the amount of EEPROM memory used :
+  usedEEPROMAdress = 0;
+  // Let 4 bytes to store the amount of memory used in EEPROM :
+  firstEEPROMFreeAddress = 4;
+  // Determine the session number :
+  getEEPROMUsage(usedEEPROMAdress);
+  // If the EEPROM is not empty, increment the session number :
+  if (nbBytesWritten > 0) {
+    sessionNumber++;
+  }
   // Init the button :
   pinMode(buttonPin, INPUT);
   pinMode(standByButtonPin, INPUT);
@@ -83,12 +96,14 @@ void setup(){
   GLCD.ClearScreen();
   GLCD.ClearScreen();
  
+  // Create a timer sequenced at 10 seconds for clear screen by 10 seconds interval :
   timer.setInterval(10000, doEachTenSeconds);
  
   // Init the serial link for getting stored crhonos via USB :
   Serial.begin(9600);
   String eepromContent = EEPROM_readAnything(0, logLine);
-  Serial.print();
+  Serial.print("EEPROM content :");
+  Serial.print(eepromContent);
 }
 
 // MAIN //
@@ -131,13 +146,16 @@ void buttonPushed() {
   }
 
   // Construct the log to ba saved :
-  logLine = String(lap) + ";" + String(currentChronoDisplayInMinutes) + "'" +
+  logLine = String(sessionNumber) + ";" + String(lap) + ";" + String(currentChronoDisplayInMinutes) + "'" +
             String(currentChronoDisplayInSeconds) + "''" +
             String(currentChronoDisplayInMilliseconds) + ";" + 
             String(lastLapDiffTimeSymbol) +
             String(lastLapDiffTimeInMinutes) + "'" + 
             String(lastLapDiffTimeInSeconds) + "'" + 
             String(lastLapDiffTimeInMilliSeconds) + ";\n";
+  
+  // Get the number of bytes will are written in EEPROM
+  nbBytesWritten = logLine.length();
   //writeToSD(logLine);
   writeToEEPROM(logLine);
   Serial.print(logLine);
@@ -243,7 +261,6 @@ void displayError() {
 
   GLCD.CursorTo(3,3);
  // GLCD.Puts(errormsg);
-
 }
 
 void display() {
@@ -293,6 +310,11 @@ void display() {
   GLCD.CursorTo(4,2);
   GLCD.Puts("''");
   GLCD.CursorTo(5,2);
+  if (bestLapInMilliSeconds < 10) {
+    GLCD.Puts("00");
+  } else if (bestLapInMilliSeconds < 100) {
+    GLCD.Puts("0");
+  }
   GLCD.print(bestLapInMilliSeconds);
   // END OF -> Display bestLap
   
@@ -309,6 +331,11 @@ void display() {
   GLCD.print(lastLapDiffTimeInSeconds);
   GLCD.Puts("''");
   GLCD.CursorTo(9,3);
+  if (lastLapDiffTimeInMilliSeconds < 10) {
+    GLCD.Puts("00");
+  } else if (lastLapDiffTimeInMilliSeconds < 100) {
+    GLCD.Puts("0");
+  }
   GLCD.print(lastLapDiffTimeInMilliSeconds);
   // END OF -> Display lastLapDiffTime
   
@@ -342,22 +369,29 @@ void writeToSD(String stringLog) {
 /*void writeToSD(String stringLog) {
   
   // Open file for writing :
-  int i = 1;
-  string filename = "session" + i + ".log";
-  if (!SD.exists(filename)) {
+  //int i = 1;
+  //string filename = "session" + i + ".log";
+  String filename = "session" + String(sessionNumber) + ".log";
+  if (SD.exists(filename)) {
+    //i++;
+    sessionNumber++;
+  } else {
     file = SD.open(filename, FILE_WRITE);
       if (file) {
         file.println(stringLog); 
       } else {
         errormsg = 'SDERR';
       }
-  } else {
-  i++;
   }
 }*/
 
 void writeToEEPROM(String stringLog) {
-  EEPROM_writeAnything(0, stringLog);
+  // Get the usage of EEPROM :
+  getEEPROMUsage(usedEEPROMAdress);
+  // Calculate the first free EEPROM address :
+  int address = firstEEPROMFreeAddress + nbBytesWritten;
+  // Write log to EEPROM :
+  EEPROM_writeAnything(address, stringLog);
 }
 
 
@@ -376,4 +410,10 @@ void clearScreenForTenSeconds() {
  } else if (currentChronoDisplayInMinutes == 10) {
    GLCD.ClearScreen();
  }
+}
+
+// This function read the reference EEPROM address where the amount of memory usage is stored :
+int getEEPROMUsage(int usedEEPROMAdress) {
+  nbBytesWritten = EEPROM.read(usedEEPROMAdress);
+  return nbBytesWritten;
 }
