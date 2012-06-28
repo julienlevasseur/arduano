@@ -14,3 +14,5 @@ A second button (called standByModeButton) is used to set back to standByMode tu
 
 Here's a little video demonstrate how the Arduano work : http://www.youtube.com/watch?v=WIH_s1cBXII 
 (with some graphic bugs that should corrected soon)
+
+Here's a new video : http://youtu.be/vnzfdn6kdAQ
